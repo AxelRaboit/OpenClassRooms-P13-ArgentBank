@@ -44,6 +44,50 @@ export const loadUser = createAsyncThunk(
 );
 
 /**
+ * Method who call the API to edit a user
+ * This is an asynchronous action created using createAsyncThunk.
+ * It performs an HTTP PUT request to the API to edit a user profile using the authentication token.
+ * The new first and last names are extracted from the profile object passed as parameter.
+ * If the request succeeds, the new first and last name values are extracted from the response and returned as the action result.
+ * If the request fails, the error message from the response is returned using rejectWithValue.
+ */
+export const editName = createAsyncThunk(
+  'profile/editName',
+  async (profile, { rejectWithValue }) => {
+    try {
+      const token = localStorage.getItem('token');
+
+      if(!token) return rejectWithValue('No token found');
+
+      if (token) {
+        const response = await axios.put(
+          profileURL,
+          {
+            // request body with token to get user profile data from DB trough API
+            firstName: profile.firstName,
+            lastName: profile.lastName,
+          },
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+
+        const firstName = response.data.body.firstName;
+        const lastName = response.data.body.lastName;
+
+        return {
+          firstName,
+          lastName
+        };
+      }
+    } catch (error) {
+      const errorMsg = error.response.data.message;
+      return rejectWithValue(errorMsg);
+    }
+  }
+);
+
+/**
  * This is the initial state of the profile slice.
  * It includes the following properties: email, firstName, lastName, id, profileStatus, and profileUpdated.
  * profileStatus is initialized to the value of what return localStorage by getting the token item, indicating if the user profile has been loaded or not.
@@ -97,6 +141,30 @@ const profileSlice = createSlice({
       return {
         ...state,
         profileStatus: 'rejected',
+      };
+    });
+
+    builder.addCase(editName.pending, (state, action) => {
+      return { ...state, profileUpdated: 'pending' };
+    });
+
+    // When the editName Method result is FULLFILLED
+    builder.addCase(editName.fulfilled, (state, action) => {
+      if (action.payload) {
+        return {
+          ...state,
+          firstName: action.payload.firstName,
+          lastName: action.payload.lastName,
+          profileUpdated: 'success',
+        };
+      } else return state;
+    });
+
+    // When the editName Method result is REJECTED
+    builder.addCase(editName.rejected, (state, action) => {
+      return {
+        ...state,
+        profileUpdated: 'rejected',
       };
     });
   },
