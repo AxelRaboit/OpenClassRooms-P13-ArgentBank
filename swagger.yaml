@@ -11,7 +11,6 @@ schemes:
 
 # path for each API requests
 paths:
-  # Get transactions
   /user/transactions:
     get:
       security:
@@ -43,10 +42,13 @@ paths:
         '500':
           description: Internal Server Error
 
-  # View transaction detail , modify and delete chosen transaction
-
   /user/transactions/{transactionId}:
-    # View transaction detail
+    parameters:
+      - in: path
+        name: transactionId
+        required: true
+        type: integer
+        description: An ID of transaction that has been selected by user
     get:
       security:
         - Bearer: []
@@ -110,6 +112,62 @@ paths:
           description: Invalid Fields
         '500':
           description: Internal Server Error
+          
+    post:
+      security:
+        - Bearer: []
+      tags:
+        - Create transaction
+      summary: Create a new transaction
+      description: Create a new transaction
+      parameters:
+        - in: header
+          name: Authorization
+          description: Attach Bearer JWT token
+          type: string
+          required: true
+        - in: body
+          name: body
+          required: true
+          schema:
+            $ref: '#/definitions/NewTransaction'
+      produces:
+        - application/json
+      responses:
+        '201':
+          description: New transaction created
+        '400':
+          description: Invalid Fields
+        '500':
+          description: Internal Server Error
+    
+    delete:
+      security:
+        - Bearer: []
+      tags:
+        - Delete transaction
+      summary: Delete a transaction by transaction ID
+      description: API endpoint to delete a specific transaction
+      parameters:
+        - in: header
+          name: Authorization
+          description: Attach Bearer JWT token
+          type: string
+          required: true
+        - in: path
+          name: transactionId
+          required: true
+          type: integer
+          description: The ID of the transaction to be deleted
+      produces:
+        - application/json
+      responses:
+        '200':
+          description: Transaction successfully deleted
+        '400':
+          description: Invalid Fields
+        '500':
+          description: Internal Server Error
 
 securityDefinitions:
   Bearer:
@@ -132,6 +190,43 @@ definitions:
         type: array
         items:
           $ref: '#/definitions/Transaction'
+  NewTransaction:
+    type: object
+    properties:
+      id:
+        type: string
+        description: Transaction ID
+        example: 20
+      date:
+        type: string
+        format: date-time
+        description: Transaction date and time
+        example: '2023-07-07T10:30:00.000Z'
+      description:
+        type: string
+        description: Transaction description
+        example: New transaction
+      amount:
+        type: integer
+        format: int32
+        description: Transaction amount
+        example: 100
+      balance:
+        type: string
+        description: Account balance after transaction
+        example: 5000
+      type:
+        type: string
+        description: Transaction type
+        example: Expense
+      category:
+        type: string
+        description: Transaction category
+        example: Food
+      notes:
+        type: string
+        description: Transaction notes
+        example: Lunch
   SingleTransaction:
     type: object
     properties:
